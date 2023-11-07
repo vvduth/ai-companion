@@ -1,11 +1,39 @@
 
 import Categories from '@/components/Categories'
+import Companions from '@/components/Companions'
 import SearchInput from '@/components/SearchInput'
 import prismadb from '@/lib/prismadb'
 import React from 'react'
 // server component which ahs access to the database
-const RootPage = async () => {
 
+interface RootPageProps {
+  searchParams: {
+    categoryId: string, 
+    name: string, 
+  }
+}
+const RootPage = async ({searchParams}: RootPageProps) => {
+
+  const data = await prismadb.companion.findMany({
+    where: {
+      categoryId: searchParams.categoryId, 
+      name: {
+        search: searchParams.name
+      }
+    },
+    orderBy: {
+      createdAt: "desc"
+    },
+    include: {
+      _count: {
+        select: {
+          messages: true
+        }
+      }
+    }
+  })
+
+  
   const category = await prismadb.category.findMany()
   return (
     <div  className='h-full p-4 space-y-2'>
@@ -13,6 +41,7 @@ const RootPage = async () => {
       <Categories 
         data={category}
       />
+      <Companions data={data} />
     </div>
   )
 }
