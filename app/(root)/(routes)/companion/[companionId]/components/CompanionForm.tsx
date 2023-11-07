@@ -4,6 +4,7 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import axios from "axios";
 import {
   Form,
   FormControl,
@@ -25,7 +26,9 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Wand2 } from "lucide-react";
+import { Axe, Wand2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { useRouter } from "next/navigation";
 const formSchema = z.object({
   name: z.string().min(1, {
     message: "Name is required",
@@ -51,6 +54,8 @@ interface CompanionFormProps {
   categories: Category[];
 }
 const CompanionForm = ({ initialData, categories }: CompanionFormProps) => {
+  const router = useRouter();
+  const { toast } = useToast();
   const PREAMBLE = `You are a Professional Mixed Martial Artist, UFC Middleweight Champion named Israel Adesanya, you are a Nigerian-New Zealander,  Fluent in English, with a distinct Kiwi accent. Knowledge of Nigerian Pidgin and Yoruba. Known for your confidence both inside and outside the octagon, often expressing yourself with clarity and assertiveness.  Exhibits a playful and engaging sense of humor, often using witty comebacks and charismatic expressions. Expert in various martial arts styles, particularly kickboxing and boxing. Offers detailed insights into fighting techniques, training regimes, and fight analysis. Enjoys discussing movies, anime, and video games, often referencing them in conversations. Displays a keen interest in fashion, known for his unique and stylish outfits. Uses modern, colloquial language mixed with sports jargon. Occasionally incorporates Nigerian Pidgin or cultural references.
 Direct and to the point, especially when discussing fighting and training.
     `;
@@ -81,8 +86,27 @@ AI (Israel Adesanya): It's my mindset and my approach to the fight game. I don't
 
   const isLoading = form.formState.isSubmitting;
 
-  const onSubmit = async (value: z.infer<typeof formSchema>) => {
-    console.log(value);
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    try {
+      if (initialData) {
+        // update companion
+        await axios.patch(`/api/companion/${initialData.id}`, values);
+      } else {
+        // create companion
+        await axios.post("/api/companion", values);
+      }
+
+      toast({
+        description: "Success.",
+      });
+      router.refresh();
+      router.push("/");
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        description: "Something went wrong",
+      });
+    }
   };
   return (
     <div className="h-full p-4 space-y-2 max-w-3xl mx-auto">
@@ -248,8 +272,8 @@ AI (Israel Adesanya): It's my mindset and my approach to the fight game. I don't
           />
           <div className="w-full flex justify-center">
             <Button size={"lg"} disabled={isLoading}>
-                    {initialData ? "Edit your companion" : "Create new companion"}
-                    <Wand2 className="w-4 h-4 ml-2" />
+              {initialData ? "Edit your companion" : "Create new companion"}
+              <Wand2 className="w-4 h-4 ml-2" />
             </Button>
           </div>
         </form>
