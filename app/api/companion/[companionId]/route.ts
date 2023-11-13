@@ -11,7 +11,7 @@ export async function PATCH(
     const body = await req.json();
     const user = await currentUser();
     const { src, name, description, instructions, seed, categoryId } = body;
-    if (!user || !user.id || !user.firstName) {
+    if (!user || !user.id ) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -45,7 +45,7 @@ export async function PATCH(
       data: {
         categoryId,
         userId: user.id,
-        userName: user.firstName,
+        userName: user.firstName ||  user.emailAddresses[0].emailAddress,
         src,
         name,
         description,
